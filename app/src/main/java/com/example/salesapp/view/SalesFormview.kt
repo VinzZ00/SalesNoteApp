@@ -1,6 +1,14 @@
 package com.example.salesapp.view
 
+import SalesFormViewModel
+import SalesFormViewModel.ordersResponsibility.appendOrder
+import SalesFormViewModel.ordersResponsibility.updateOrder
+import SalesFormViewModel.productItemOrderResponsibility.changeProductName
+import SalesFormViewModel.productItemOrderResponsibility.changeProductQuantity
+import SalesFormViewModel.productItemOrderResponsibility.changeProductQuantityUnit
 import android.util.Log
+
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +38,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.chargemap.compose.numberpicker.ListItemPicker
 import com.example.salesapp.model.ItemOrder
@@ -51,17 +62,18 @@ import com.example.salesapp.model.QuantityUnit
 @Composable
 fun salesForm(shopName : String, navController: NavController) {
 
-    // States variables
-    var orders by remember { mutableStateOf(mutableStateListOf<ItemOrder>()) }
-    var productName by remember { mutableStateOf("") }
-    var productQuantity = remember { mutableStateOf("") }
-    var quantityUnit = remember { mutableStateOf<QuantityUnit>(QuantityUnit.PCS) }
+    // ViewModel
+    var viewModel : SalesFormViewModel = viewModel(factory = SalesFormViewModel.Factory)
 
+    // States Flow Variables
+    var orders = viewModel.order.collectAsState();
+    var productName = viewModel.productName.collectAsState();
+    var productQuantity = viewModel.productQuantity.collectAsState()
+    var quantityUnit = viewModel.quantityUnit.collectAsState()
 
     Column(
         modifier = Modifier
             .padding(16.dp)
-
     ) {
         // MARK: Content
         Row(
@@ -90,8 +102,8 @@ fun salesForm(shopName : String, navController: NavController) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Text Field (product Name)
-            OutlinedTextField(value = productName,
-                onValueChange = { productName = it },
+            OutlinedTextField(value = productName.value,
+                onValueChange = { viewModel.changeProductName(it) },
                 label = { Text("Product Name") },
                 modifier = Modifier
                     .padding(end = 10.dp)
@@ -100,11 +112,15 @@ fun salesForm(shopName : String, navController: NavController) {
 
             // Spinner (quantity)
             quantityField(
-                quantity = productQuantity,
-                quantityUnit = quantityUnit
+                quantity = productQuantity.value,
+                quantityUnit = quantityUnit.value,
+                onQuantityChange = {
+                    viewModel.changeProductQuantity(it);
+                },
+                onQuantityUnitChange = {
+                    viewModel.changeProductQuantityUnit(it);
+                }
             )
-
-
         }
 
         Column(
@@ -116,15 +132,15 @@ fun salesForm(shopName : String, navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     val order = ItemOrder(
-                        productName = productName,
+                        productName = productName.value,
                         productQuantity = productQuantity.value.toIntOrNull() ?: 0,
                         quantityUnit = quantityUnit.value
                     )
 
-                    val success = orders.add(order)
+                    viewModel.appendOrder(order);
 
-                    Log.d("Adding Order", "${ if (success) "order added successfully" else "failed to add the order"}")
-                    Log.d("Adding Order", "orders : ${orders.toList()}")
+//                    Log.d("Adding Order", "${ if (success) "order added successfully" else "failed to add the order"}")
+                    Log.d("Adding Order", "orders : ${orders.value}")
                 },
             ) {
                 Text("Add")
@@ -136,13 +152,13 @@ fun salesForm(shopName : String, navController: NavController) {
         )
 
         LazyColumn{
-            itemsIndexed(orders) {ind, item ->
+            itemsIndexed(orders.value) {ind, item ->
                 var editing by remember { mutableStateOf(false) }
 
                 if (editing) {
                     EditableListItem(item = item, onEditComplete = {
-                        orders.set(ind, it)
-                        Log.d("Order has been Change?", "${orders.toList()}")
+                        viewModel.updateOrder(it, orders.value.get(ind))
+                        Log.d("Order has been Change?", "${orders.value}")
                         editing = false
                     }) {
                         editing = false
@@ -159,7 +175,13 @@ fun salesForm(shopName : String, navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun quantityField(quantity : MutableState<String>, quantityUnit : MutableState<QuantityUnit>, modifier : Modifier = Modifier) {
+fun quantityField(
+    quantity : String,
+    quantityUnit : QuantityUnit,
+    modifier : Modifier = Modifier,
+    onQuantityChange : (newQuant : String) -> Unit,
+    onQuantityUnitChange: (newQUantUnit : QuantityUnit) -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -167,8 +189,8 @@ fun quantityField(quantity : MutableState<String>, quantityUnit : MutableState<Q
     ) {
 
         TextField(
-            value = quantity.value.toString(),
-            onValueChange = { quantity.value = it},
+            value = quantity,
+            onValueChange = { onQuantityChange(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             colors = TextFieldDefaults.textFieldColors(
                 containerColor = Color.Transparent
@@ -185,8 +207,8 @@ fun quantityField(quantity : MutableState<String>, quantityUnit : MutableState<Q
 
         ListItemPicker<QuantityUnit>(
             label = { it.quantUnit },
-            value = quantityUnit.value,
-            onValueChange = { quantityUnit.value = it },
+            value = quantityUnit,
+            onValueChange = { onQuantityUnitChange(it) },
             list = enumValues<QuantityUnit>().toList(),
             modifier = Modifier.fillMaxWidth()
         )
