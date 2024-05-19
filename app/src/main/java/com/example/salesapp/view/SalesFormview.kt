@@ -107,7 +107,7 @@ fun salesForm(shopName : String, navController: NavController) {
                 label = { Text("Product Name") },
                 modifier = Modifier
                     .padding(end = 10.dp)
-                    .fillMaxWidth(0.55f)
+                    .fillMaxWidth(0.45f)
             )
 
             // Spinner (quantity)
@@ -197,7 +197,7 @@ fun quantityField(
             ),
 
             modifier = Modifier
-                .fillMaxWidth(0.3f)
+                .fillMaxWidth(0.4f)
         )
 
         Spacer(
