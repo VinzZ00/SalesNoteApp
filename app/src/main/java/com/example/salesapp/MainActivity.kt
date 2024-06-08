@@ -15,8 +15,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.salesapp.presentation.formview.salesForm
 import com.example.salesapp.ui.theme.SalesAppTheme
-import com.example.salesapp.view.salesForm
 
 
 class MainActivity : ComponentActivity() {
@@ -45,6 +45,8 @@ class MainActivity : ComponentActivity() {
 
 
 
+
+//MARK: this is only preview
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {

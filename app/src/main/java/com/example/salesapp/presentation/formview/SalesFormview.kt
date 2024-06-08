@@ -1,14 +1,7 @@
-package com.example.salesapp.view
+package com.example.salesapp.presentation.formview
 
-import SalesFormViewModel
-import SalesFormViewModel.ordersResponsibility.appendOrder
-import SalesFormViewModel.ordersResponsibility.updateOrder
-import SalesFormViewModel.productItemOrderResponsibility.changeProductName
-import SalesFormViewModel.productItemOrderResponsibility.changeProductQuantity
-import SalesFormViewModel.productItemOrderResponsibility.changeProductQuantityUnit
+
 import android.util.Log
-
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,11 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,6 +46,11 @@ import androidx.navigation.NavController
 import com.chargemap.compose.numberpicker.ListItemPicker
 import com.example.salesapp.model.ItemOrder
 import com.example.salesapp.model.QuantityUnit
+import com.example.salesapp.presentation.formview.SalesFormViewModel.ordersResponsibility.appendOrder
+import com.example.salesapp.presentation.formview.SalesFormViewModel.ordersResponsibility.updateOrder
+import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductName
+import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductQuantity
+import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductQuantityUnit
 
 
 @OptIn(ExperimentalMaterial3Api::class)

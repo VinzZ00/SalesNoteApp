@@ -1,7 +1,6 @@
+package com.example.salesapp.presentation.formview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.salesapp.model.ItemOrder
@@ -26,6 +25,7 @@ class SalesFormViewModel : ViewModel() {
         fun SalesFormViewModel.appendOrder(newOrder: ItemOrder) {
             _order.value = _order.value + newOrder;
         }
+        
 
         fun SalesFormViewModel.deleteOrder(order : ItemOrder) {
             _order.value = _order.value - order
