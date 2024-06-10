@@ -57,6 +57,10 @@ dependencies {
 //    just testing
 //    implementation("com.github.SmartToolFactory:Compose-Colorful-Sliders:1.2.2")
 
+    // HTTP Request
+    implementation("com.squareup.retrofit2:retrofit:latest.release")
+    implementation("com.squareup.retrofit2:converter-gson:latest.release")
+
     // Number Picker from Github
     implementation("com.chargemap.compose:numberpicker:latest.release")
 
@@ -66,7 +70,12 @@ dependencies {
     // Material Design material 3
     implementation("androidx.compose.material3:material3")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:latest.release")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:latest.release")
+
+
     implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose-android:2.8.0")
