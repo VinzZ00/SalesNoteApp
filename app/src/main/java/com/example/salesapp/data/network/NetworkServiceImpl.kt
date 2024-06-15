@@ -15,7 +15,7 @@ interface NetworkService {
 class NetworkServiceImpl private constructor() : NetworkService {
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("140.238.207.125:8081")
+        .baseUrl("http://140.238.207.125:8081")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 

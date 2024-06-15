@@ -16,6 +16,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.salesapp.presentation.formview.salesForm
+import com.example.salesapp.presentation.orderlistview.SalesOrderListView
+import com.example.salesapp.repository.RestRepository
 import com.example.salesapp.ui.theme.SalesAppTheme
 
 
@@ -31,9 +33,21 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // TODO: Composable UI
                     var navController = rememberNavController()
+                    val restRepository = RestRepository()
+
+
                     NavHost(navController = navController, startDestination = "salesForm") {
+                        composable("orderListView") {
+                            SalesOrderListView(
+                                restRepository,
+                                navigationController = navController
+                            )
+                        }
                         composable("salesForm") {
-                            salesForm("Tomi Mart", navController)
+                            salesForm(
+                                navController,
+                                restRepository
+                            )
                         }
                     }
 

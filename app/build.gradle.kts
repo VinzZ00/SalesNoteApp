@@ -57,6 +57,8 @@ dependencies {
 //    just testing
 //    implementation("com.github.SmartToolFactory:Compose-Colorful-Sliders:1.2.2")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+
     // HTTP Request
     implementation("com.squareup.retrofit2:retrofit:latest.release")
     implementation("com.squareup.retrofit2:converter-gson:latest.release")
@@ -65,13 +67,13 @@ dependencies {
     implementation("com.chargemap.compose:numberpicker:latest.release")
 
     // Map Service
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-location:18.0.0")
 
     // Material Design material 3
     implementation("androidx.compose.material3:material3")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:latest.release")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:latest.release")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 
 
     implementation("androidx.core:core-ktx:1.9.0")

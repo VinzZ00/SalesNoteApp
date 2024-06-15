@@ -1,8 +1,9 @@
 package com.example.salesapp.presentation.formview
 
-
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,13 +12,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,45 +36,62 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.chargemap.compose.numberpicker.ListItemPicker
+import com.example.salesapp.data.dto.ItemOrderDTO
+import com.example.salesapp.data.dto.OrderDTO
+import com.example.salesapp.data.dto.ShopDTO
+import com.example.salesapp.data.dto.WebResponse
 import com.example.salesapp.model.ItemOrder
 import com.example.salesapp.model.QuantityUnit
 import com.example.salesapp.presentation.formview.SalesFormViewModel.ordersResponsibility.appendOrder
+import com.example.salesapp.presentation.formview.SalesFormViewModel.ordersResponsibility.setShop
 import com.example.salesapp.presentation.formview.SalesFormViewModel.ordersResponsibility.updateOrder
 import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductName
 import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductQuantity
 import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductQuantityUnit
-
+import com.example.salesapp.repository.RestRepository
+import kotlinx.coroutines.launch
+import java.util.Date
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun salesForm(shopName : String, navController: NavController) {
-
+fun salesForm(
+    navController: NavController,
+    restRepository: RestRepository
+) {
     // ViewModel
-    var viewModel : SalesFormViewModel = viewModel(factory = SalesFormViewModel.Factory)
+    var viewModel : SalesFormViewModel = viewModel(factory = SalesFormViewModel.provideFactory(restRepository))
 
     // States Flow Variables
     var orders = viewModel.order.collectAsState();
     var productName = viewModel.productName.collectAsState();
     var productQuantity = viewModel.productQuantity.collectAsState()
     var quantityUnit = viewModel.quantityUnit.collectAsState()
-
+    var shop : State<ShopDTO?> = viewModel.selectedShop.collectAsState()
+    var coroutineScope = rememberCoroutineScope()
     Column(
         modifier = Modifier
             .padding(16.dp)
+
     ) {
         // MARK: Content
         Row(
@@ -76,13 +99,48 @@ fun salesForm(shopName : String, navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Text(
-                text = "Penjualan $shopName",
-                style = MaterialTheme.typography.headlineSmall
-            )
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier
+                    .wrapContentWidth()
+            ) {
+                Text(
+                    text = "Penjualan ",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(end = 5.dp)
+                )
+                
+                DropDownList(viewModel = viewModel, selectedShopDTO = shop) {
+                    viewModel.setShop(it)
+                }
+            }
             IconButton(onClick = {
                 // TODO save the record
-                Log.d("Saving records", "salesForm: saving records button tapped")
+                var orderDTO = OrderDTO(
+                    totalAmount = (orders.value.map { it.price ?: 0.0 } as List<Int>).sum().toDouble(),
+                    status = "On Progress",
+                    dateOrder = Date(),
+                    items = orders.value.map {
+                        ItemOrderDTO(
+                            UUID.randomUUID(),
+                            name = it.productName,
+                            quantity = it.productQuantity ?: 0,
+                            price = (it.price ?: 0.0).toDouble() * (it.productQuantity ?: 0).toDouble()
+                        )
+                    }
+                )
+                try {
+                    coroutineScope.launch {
+                       var res = viewModel.repository.addOrder(orderDTO)
+                        Log.d("SalesForm", "Order saved successfully")
+                        Log.d("SalesForm", "Order saved successfully with ${res.data}")
+                    }
+                } catch (err : Exception) {
+                    Log.e("SalesForm", "Error saving order", err)
+                }
+
+
             }) {
                 Icon(imageVector = Icons.Default.Send, contentDescription = "Save record")
             }
@@ -378,6 +436,110 @@ fun ListItemContent(order : ItemOrder, onEditClick : () -> Unit) {
             )
         }
 
+    }
+}
+
+@Composable
+fun DropDownList(viewModel: SalesFormViewModel, selectedShopDTO : State<ShopDTO?> ,onselectedShop : (ShopDTO) -> Unit) {
+
+    var expanded by remember { mutableStateOf<Boolean>(false) }
+    var shopList by remember {
+        mutableStateOf<WebResponse<List<ShopDTO>>>(
+            WebResponse(
+                emptyList(),
+                "",
+                ""
+            )
+        )
+    }
+//    var shopList : WebResponse<List<ShopDTO>> = WebResponse(emptyList(), "", "");
+
+    val coroutineScope = rememberCoroutineScope()
+    var verticalScrollState = rememberScrollState()
+
+    Box {
+
+        if (expanded) {
+            // TODO: Implement drop down list item
+            Popup {
+                Row(verticalAlignment = Alignment.Top) {
+                    Column(
+                        verticalArrangement = Arrangement.Top ,
+                        modifier = Modifier
+                            .height(200.dp)
+                            .verticalScroll(verticalScrollState)
+                    ) {
+                        shopList.data.forEach {
+                            Text(
+                                it.name,
+                                style = TextStyle(fontSize = 20.sp),
+                                modifier = Modifier
+                                    .clickable {
+                                        onselectedShop(it)
+                                        expanded = !expanded
+                                    }
+                                    .padding(bottom = 5.dp)
+                            )
+                        }
+                    }
+                    IconButton(
+                        modifier = Modifier.height(20.dp),
+                        onClick = {
+                        expanded = !expanded
+
+                        coroutineScope.launch {
+                            try {
+                                shopList = viewModel.repository.getAllShop()
+                                Log.d(
+                                    "ShopListData",
+                                    "DropDownList: ${shopList.errMessage}, ${shopList.statusCode} "
+                                )
+                            } catch (error: Exception) {
+                                Log.e("DropDownList", "DropDownList: Error fetching shops", error)
+                            }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = "extend"
+                        )
+                    }
+                }
+            }
+        } else {
+            Row(
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    if (selectedShopDTO.value != null && selectedShopDTO.value!!.name != "") selectedShopDTO.value!!.name else "Select Shop First",
+                    style = TextStyle(fontSize = 20.sp)
+                )
+
+                IconButton(
+                    modifier = Modifier.height(20.dp),
+                    onClick = {
+                    expanded = !expanded
+
+                    coroutineScope.launch {
+                        try {
+//                    var shop = restRepository.getAllShop()
+                            shopList = viewModel.repository.getAllShop()
+                            Log.d(
+                                "ShopListData",
+                                "DropDownList: ${shopList.errMessage}, ${shopList.statusCode} "
+                            )
+                        } catch (error: Exception) {
+                            Log.e("DropDownList", "DropDownList: Error fetching shops", error)
+                        }
+                    }
+                }) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = "extend"
+                    )
+                }
+            }
+        }
     }
 }
 

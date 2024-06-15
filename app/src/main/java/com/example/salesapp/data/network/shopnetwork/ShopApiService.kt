@@ -1,27 +1,30 @@
 package com.example.salesapp.data.network.shopnetwork
 
+import com.example.salesapp.data.dto.JSONDeserializedResponse
 import com.example.salesapp.data.dto.ShopDTO
-import com.example.salesapp.data.network.ApiService
+import com.example.salesapp.data.dto.WebResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-interface ShopApiService : ApiService<ShopDTO> {
-
-    @GET("api/shop/getshops")
-    override suspend fun getAll(): List<ShopDTO>
+interface ShopApiService
+//    : ApiService<ShopDTO>
+{
 
     @GET("api/shop/getshop")
-    override suspend fun get(@Query("id") identifier: String): ShopDTO
+     suspend fun getAll(): WebResponse<List<ShopDTO>>
+
+    @GET("api/shop/getshop")
+     suspend fun get(@Query("id") identifier: String): WebResponse<ShopDTO>
 
     @POST("api/shop/deleteshop")
-    override suspend fun delete(@Query("id") identifier: String): Boolean
+     suspend fun delete(@Query("id") identifier: String): JSONDeserializedResponse
 
     @POST("api/shop/updateshop")
-    override suspend fun update(@Body t: ShopDTO): Boolean
+     suspend fun update(@Body t: ShopDTO): JSONDeserializedResponse
 
     @POST("api/shop/addshop")
-    override suspend fun add(@Body t: ShopDTO): Boolean
+     suspend fun add(@Body t: ShopDTO): Boolean
 
 }

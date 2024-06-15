@@ -5,5 +5,5 @@ public data class ShopDTO(
     var name : String,
     var address : String,
     var phoneNumber : String,
-    var orders : List<OrderDTO>
+    var orders : List<OrderDTO> = emptyList()
 )
