@@ -27,6 +27,15 @@ class SalesFormViewModel(repository : RestRepository) : ViewModel() {
     val quantityUnit = _quantityUnit.asStateFlow()
     val selectedShop : StateFlow<ShopDTO?> = _selectedShop.asStateFlow()
     val repository = repository
+
+    fun clearForm() {
+        _order.value = emptyList()
+        _productName.value = ""
+        _productQuantity.value = ""
+        _quantityUnit.value = QuantityUnit.PCS
+        _selectedShop.value = null
+    }
+
     object ordersResponsibility {
         fun SalesFormViewModel.appendOrder(newOrder: ItemOrder) {
             _order.value = _order.value + newOrder;

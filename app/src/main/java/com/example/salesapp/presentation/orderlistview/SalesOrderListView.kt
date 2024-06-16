@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,8 +17,7 @@ import com.example.salesapp.repository.RestRepository
 fun SalesOrderListView(
     restRepository: RestRepository,
     navigationController: NavController
-) {
-
+) {1
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -32,13 +32,13 @@ fun SalesOrderListView(
             )
 
             // Add Order Button
-//            IconButton(
-//                onClick = {
-//                    navigationController.navigate("salesForm")
-//                }
-//            ) {
-
-//            }
+            IconButton(
+                onClick = {
+                    navigationController.navigate("salesForm")
+                }
+            ) {
+                
+            }
 
         }
     }

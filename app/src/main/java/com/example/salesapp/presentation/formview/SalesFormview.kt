@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -68,7 +70,9 @@ import com.example.salesapp.presentation.formview.SalesFormViewModel.productItem
 import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductQuantity
 import com.example.salesapp.presentation.formview.SalesFormViewModel.productItemOrderResponsibility.changeProductQuantityUnit
 import com.example.salesapp.repository.RestRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
 
@@ -87,143 +91,209 @@ fun salesForm(
     var productQuantity = viewModel.productQuantity.collectAsState()
     var quantityUnit = viewModel.quantityUnit.collectAsState()
     var shop : State<ShopDTO?> = viewModel.selectedShop.collectAsState()
+
     var coroutineScope = rememberCoroutineScope()
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
+    var isLoading by remember { mutableStateOf(false) }
 
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopStart
     ) {
-        // MARK: Content
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier
-                    .wrapContentWidth()
-            ) {
-                Text(
-                    text = "Penjualan ",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(end = 5.dp)
-                )
-                
-                DropDownList(viewModel = viewModel, selectedShopDTO = shop) {
-                    viewModel.setShop(it)
-                }
-            }
-            IconButton(onClick = {
-                // TODO save the record
-                var orderDTO = OrderDTO(
-                    totalAmount = (orders.value.map { it.price ?: 0.0 } as List<Int>).sum().toDouble(),
-                    status = "On Progress",
-                    dateOrder = Date(),
-                    items = orders.value.map {
-                        ItemOrderDTO(
-                            UUID.randomUUID(),
-                            name = it.productName,
-                            quantity = it.productQuantity ?: 0,
-                            price = (it.price ?: 0.0).toDouble() * (it.productQuantity ?: 0).toDouble()
-                        )
-                    }
-                )
-                try {
-                    coroutineScope.launch {
-                       var res = viewModel.repository.addOrder(orderDTO)
-                        Log.d("SalesForm", "Order saved successfully")
-                        Log.d("SalesForm", "Order saved successfully with ${res.data}")
-                    }
-                } catch (err : Exception) {
-                    Log.e("SalesForm", "Error saving order", err)
-                }
-
-
-            }) {
-                Icon(imageVector = Icons.Default.Send, contentDescription = "Save record")
-            }
-        }
-
-
-        Spacer(modifier = Modifier
-            .height(16.dp)
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Text Field (product Name)
-            OutlinedTextField(value = productName.value,
-                onValueChange = { viewModel.changeProductName(it) },
-                label = { Text("Product Name") },
-                modifier = Modifier
-                    .padding(end = 10.dp)
-                    .fillMaxWidth(0.45f)
-            )
-
-            // Spinner (quantity)
-            quantityField(
-                quantity = productQuantity.value,
-                quantityUnit = quantityUnit.value,
-                onQuantityChange = {
-                    viewModel.changeProductQuantity(it);
-                },
-                onQuantityUnitChange = {
-                    viewModel.changeProductQuantityUnit(it);
-                }
-            )
-        }
-
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .fillMaxWidth()
+                .padding(16.dp)
+
         ) {
-            FilledTonalButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    val order = ItemOrder(
-                        productName = productName.value,
-                        productQuantity = productQuantity.value.toIntOrNull() ?: 0,
-                        quantityUnit = quantityUnit.value
+            // MARK: Content
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier
+                        .wrapContentWidth()
+                ) {
+                    Text(
+                        text = "Penjualan ",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(end = 5.dp)
                     )
 
-                    viewModel.appendOrder(order);
+                    DropDownList(viewModel = viewModel, selectedShopDTO = shop) {
+                        viewModel.setShop(it)
+                    }
+                }
+                IconButton(
+                    enabled = shop.value != null && shop.value!!.name != "" && orders.value.isNotEmpty(),
+                    onClick = {
+
+                        val dtf = SimpleDateFormat("yyyy-MM-dd")
+                        // TODO save the record
+                        var orderDTO = OrderDTO(
+                            id = null,
+                            totalAmount = (orders.value.map { it.price ?: 0.0 } as List<Int>).sum().toDouble(),
+                            status = "On Progress",
+                            dateOrdered = dtf.format(Date()),
+                            shopId = UUID.fromString(shop.value!!.id)
+                        )
+                        try {
+                            coroutineScope.launch {
+                                isLoading = true
+                                var res = async {
+                                    viewModel.repository.addOrder(orderDTO)
+                                }
+
+                                Log.d("Inside of the coroutine scope", "salesForm: res : ${res.await().statusCode}, ${res.await().data}, ${res.await().errMessage}")
+
+                                var idString = res.await().data
+
+                                orders.value.forEach {
+                                    var orderItem = ItemOrderDTO(
+                                        id = null,
+                                        productName = it.productName,
+                                        quantity = it.productQuantity ?: 1,
+                                        price = (it.price ?: 0.0).toDouble(),
+                                        order = OrderDTO(
+                                            id = idString,
+                                            totalAmount = (orders.value.map { it.price ?: 0.0 } as List<Int>).sum().toDouble(),
+                                            status = "On Progress",
+                                            dateOrdered = dtf.format(Date()),
+                                            shopId = UUID.fromString(shop.value!!.id)
+                                        )
+                                    )
+
+                                    try {
+                                        val resp = viewModel.repository.addItemOrdered(orderItem)
+                                        Log.d("Sales Didalam try", "salesForm: ${resp}")
+                                    } catch (err : Exception) {
+                                        Log.e("SalesForm", "Error saving order", err)
+                                    } finally {
+                                        isLoading = false
+                                        navController.popBackStack()
+                                        viewModel.clearForm()
+
+                                    }
+                                }
+                            }
+                        } catch (err : Exception) {
+                            Log.e("SalesForm", "Error saving order", err)
+                        }
+
+
+                    }) {
+                    Icon(imageVector = Icons.Default.Send, contentDescription = "Save record")
+                }
+            }
+
+
+            Spacer(modifier = Modifier
+                .height(16.dp)
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Text Field (product Name)
+                OutlinedTextField(value = productName.value,
+                    onValueChange = { viewModel.changeProductName(it) },
+                    label = { Text("Product Name") },
+                    modifier = Modifier
+                        .padding(end = 10.dp)
+                        .fillMaxWidth(0.45f)
+                )
+
+                // Spinner (quantity)
+                quantityField(
+                    quantity = productQuantity.value,
+                    quantityUnit = quantityUnit.value,
+                    onQuantityChange = {
+                        viewModel.changeProductQuantity(it);
+                    },
+                    onQuantityUnitChange = {
+                        viewModel.changeProductQuantityUnit(it);
+                    }
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                FilledTonalButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val order = ItemOrder(
+                            productName = productName.value,
+                            productQuantity = productQuantity.value.toIntOrNull() ?: 0,
+                            quantityUnit = quantityUnit.value
+                        )
+
+                        viewModel.appendOrder(order);
 
 //                    Log.d("Adding Order", "${ if (success) "order added successfully" else "failed to add the order"}")
-                    Log.d("Adding Order", "orders : ${orders.value}")
-                },
-            ) {
-                Text("Add")
+                        Log.d("Adding Order", "orders : ${orders.value}")
+                    },
+                ) {
+                    Text("Add")
+                }
             }
-        }
 
-        Divider(
-            color = Color.LightGray
-        )
+            Divider(
+                color = Color.LightGray
+            )
 
-        LazyColumn{
-            itemsIndexed(orders.value) {ind, item ->
-                var editing by remember { mutableStateOf(false) }
+            LazyColumn{
+                itemsIndexed(orders.value) {ind, item ->
+                    var editing by remember { mutableStateOf(false) }
 
-                if (editing) {
-                    EditableListItem(item = item, onEditComplete = {
-                        viewModel.updateOrder(it, orders.value.get(ind))
-                        Log.d("Order has been Change?", "${orders.value}")
-                        editing = false
-                    }) {
-                        editing = false
-                    }
-                } else {
-                    ListItemContent(order = item) {
-                        editing = true
+                    if (editing) {
+                        EditableListItem(item = item, onEditComplete = {
+                            viewModel.updateOrder(it, orders.value.get(ind))
+                            Log.d("Order has been Change?", "${orders.value}")
+                            editing = false
+                        }) {
+                            editing = false
+                        }
+                    } else {
+                        ListItemContent(order = item) {
+                            editing = true
+                        }
                     }
                 }
             }
         }
+
+        if (isLoading) {
+            WaitDialog()
+        }
     }
+}
+
+@Composable
+fun WaitDialog() {
+    AlertDialog(
+        onDismissRequest = { /* Do nothing to prevent dismissing */ },
+        title = {
+            Text(text = "Please Wait")
+        },
+        text = {
+            Text("Your request is being processed. This might take a while.")
+        },
+        confirmButton = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(all = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Please Wait")
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,11 +1,9 @@
 package com.example.salesapp.data.dto
 
-import java.util.UUID
-
 data class ItemOrderDTO(
-    val id : UUID,
-    var name : String,
+    val id : String?,
+    var productName : String,
     var quantity : Int,
-    var price : Double
-//    var orderId : UUID
+    var price : Double,
+    var order : OrderDTO
 )

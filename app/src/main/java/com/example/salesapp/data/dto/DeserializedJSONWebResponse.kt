@@ -22,7 +22,7 @@ object JSONObjectToStringSerializer : KSerializer<String> {
 }
 
 @Serializable
-data class Product (
+data class DeserializedJSONWebResponse (
     @Serializable(with = JSONObjectToStringSerializer::class) var data : String,
     val errMessage : String,
     val statusCode : String

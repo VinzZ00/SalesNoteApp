@@ -1,6 +1,6 @@
 package com.example.salesapp.data.network.shopnetwork
 
-import com.example.salesapp.data.dto.JSONDeserializedResponse
+import com.example.salesapp.data.dto.DeserializedJSONWebResponse
 import com.example.salesapp.data.dto.ShopDTO
 import com.example.salesapp.data.dto.WebResponse
 import retrofit2.http.Body
@@ -19,10 +19,10 @@ interface ShopApiService
      suspend fun get(@Query("id") identifier: String): WebResponse<ShopDTO>
 
     @POST("api/shop/deleteshop")
-     suspend fun delete(@Query("id") identifier: String): JSONDeserializedResponse
+     suspend fun delete(@Query("id") identifier: String): DeserializedJSONWebResponse
 
     @POST("api/shop/updateshop")
-     suspend fun update(@Body t: ShopDTO): JSONDeserializedResponse
+     suspend fun update(@Body t: ShopDTO): DeserializedJSONWebResponse
 
     @POST("api/shop/addshop")
      suspend fun add(@Body t: ShopDTO): Boolean
