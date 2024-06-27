@@ -10,6 +10,6 @@ enum class QuantityUnit(val quantUnit : String) {
 data class ItemOrder(
     var productName : String,
     var productQuantity : Int? = 0,
-    var price : Int? = null,
+    var price : Double? = null,
     var quantityUnit : QuantityUnit
 )

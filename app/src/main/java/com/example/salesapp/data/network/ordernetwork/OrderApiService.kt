@@ -11,6 +11,7 @@ import retrofit2.http.Query
 interface OrderApiService
 //    : ApiService<OrderDTO>
 {
+
     @GET("api/order/getorders")
     suspend fun get(@Query("shopId") identifier: String): WebResponse<OrderDTO>
 

@@ -1,6 +1,7 @@
 package com.example.salesapp.data.network.shopnetwork
 
 import com.example.salesapp.data.dto.DeserializedJSONWebResponse
+import com.example.salesapp.data.dto.FullFetchData
 import com.example.salesapp.data.dto.ShopDTO
 import com.example.salesapp.data.dto.WebResponse
 import retrofit2.http.Body
@@ -14,6 +15,9 @@ interface ShopApiService
 
     @GET("api/shop/getshop")
      suspend fun getAll(): WebResponse<List<ShopDTO>>
+
+     @GET("api/shop/getshop")
+     suspend fun fetchAll() : WebResponse<List<FullFetchData>>
 
     @GET("api/shop/getshop")
      suspend fun get(@Query("id") identifier: String): WebResponse<ShopDTO>

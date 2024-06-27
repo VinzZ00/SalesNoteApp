@@ -8,6 +8,5 @@ data class OrderDTO(
     var status : String,
     var dateOrdered : String,
     var shopId : UUID
-
 )
 

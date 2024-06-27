@@ -12,12 +12,15 @@ class RestRepository {
 
     // MARK: SHOP API
     suspend fun getAllShop() = shopApiService.getAll()
+
+    suspend fun fetchAllData() = shopApiService.fetchAll()
     suspend fun getShop(shopId: String) = shopApiService.get(shopId)
     suspend fun deleteShop(shopId: String) = shopApiService.delete(shopId)
     suspend fun updateShop(shop: ShopDTO) = shopApiService.update(shop)
     suspend fun addShop(shop: ShopDTO) = shopApiService.add(shop)
 
     // MARK: ORDER API
+    suspend fun getAllOrder() = orderApiService
     suspend fun getOrder(shopId: String) = orderApiService.get(shopId)
     suspend fun addOrder(order: OrderDTO) = orderApiService.add(order)
     suspend fun updateOrder(order: OrderDTO) = orderApiService.update(order)
